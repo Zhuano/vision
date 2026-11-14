@@ -7,14 +7,16 @@
 - 操作系统：Windows 11
 - 环境管理：Anaconda（conda 26.5.3），独立环境 `vision`
 - Python 3.12.13
-- 依赖：numpy 2.5.4、opencv-python 5.0.0
+- 依赖：numpy 2.5.4、opencv-python 5.0.0.93（`cv2.__version__` 显示 `5.0.0`），见 `requirements.txt`
 
 创建环境并安装依赖：
 
 ```bash
 conda create -n vision python=3.12 -y
-conda run -n vision python -m pip install numpy opencv-python
+conda run -n vision python -m pip install -r requirements.txt
 ```
+
+> 注：`requirements.txt` 不是任务要求，是为了方便复现环境额外添加的。
 
 所有脚本都在**仓库根目录**运行，例如：
 
@@ -26,6 +28,9 @@ conda run -n vision python src/array_ops.py
 
 ```text
 vision/
+├── README.md
+├── requirements.txt
+├── .gitignore
 ├── src/        # capture.py / array_ops.py / filter_demo.py / calibrate.py
 ├── data/       # photo.jpg 和 calibration/ 棋盘图片
 └── results/    # 处理结果、角点图、标定参数、去畸变对比
