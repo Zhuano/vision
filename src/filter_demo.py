@@ -6,6 +6,10 @@ import numpy as np
 DATA_PATH = Path("data/photo.jpg")
 RESULTS_DIR = Path("results")
 
+# 下面是参数设定，包括随机种子、噪声比例和滤波窗口大小
+# 这里用的中值滤波是排序后取中位数，属于非线性滤波。
+# ksize 是参与计算的邻域窗口大小：3 表示 3×3，9 表示 9×9。
+# 椒盐噪声是极端的 0/255，排序后位于两端，不会改变中位数，所以中值滤波能有效去掉它们并保留边缘。
 SEED = 42
 NOISE_RATIO = 0.05
 KSIZE_SMALL = 3
@@ -34,11 +38,12 @@ def main() -> None:
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
     img = cv2.imread(str(DATA_PATH))
+    # 若读取图像失败，退出并打印错误信息
     if img is None:
         raise SystemExit(f"Cannot read {DATA_PATH}")
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    # 固定随机种子：每次运行得到完全相同的噪点位置
+    # 固定随机种子：使得每次运行得到完全相同的噪点位置
     rng = np.random.default_rng(SEED)
     n = int(gray.size * NOISE_RATIO)
 
@@ -46,17 +51,19 @@ def main() -> None:
     idx = rng.choice(gray.size, size=n, replace=False)
     ys, xs = np.unravel_index(idx, gray.shape)
 
-    # 在副本上撒椒盐，别动干净的 gray
+    # 在副本上撒椒盐
     noisy = gray.copy()
     half = n // 2
     noisy[ys[:half], xs[:half]] = 0       # 椒：黑点
     noisy[ys[half:], xs[half:]] = 255     # 盐：白点
     print(f"Added {n} noise pixels ({NOISE_RATIO:.0%}) with seed={SEED}")
 
-    # 中值滤波：ksize 必须是大于 1 的奇数，输入必须是 uint8
+    # 中值滤波
     median3 = cv2.medianBlur(noisy, KSIZE_SMALL)
     median9 = cv2.medianBlur(noisy, KSIZE_LARGE)
 
+    # 计算平均绝对误差（MAE）：衡量和干净图的整体偏差。
+    # 这个偏差既包含残留噪声，也包含纹理损失；所以 9×9 的 MAE 更大不代表去噪更差，而是它把纹理也抹掉了，需要结合放大图判断。
     print(f"MAE vs clean gray: noisy={mae(noisy, gray):.2f}, "
           f"median{KSIZE_SMALL}={mae(median3, gray):.2f}, "
           f"median{KSIZE_LARGE}={mae(median9, gray):.2f}")

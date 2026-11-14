@@ -6,20 +6,25 @@ import numpy as np
 DATA_PATH = Path("data/photo.jpg")
 RESULTS_DIR = Path("results")
 
-# 取样像素 (u, v) = (x, y)；img[v, u] 才是这个点
+# 下面是参数设定
+# 取样像素 (u, v) = (x, y)
 PIXEL_U, PIXEL_V = 320, 240
 
-# 裁剪区域：[y1:y2, x1:x2]，左上角 (x1, y1)，右下角 (x2, y2)
+# 裁剪区域：[y1:y2, x1:x2]
 CROP_X1, CROP_Y1, CROP_X2, CROP_Y2 = 160, 120, 440, 360
 
-# 局部改色区域，同样用 (x, y)
+# 局部改色区域
 PATCH_X1, PATCH_Y1, PATCH_X2, PATCH_Y2 = 40, 40, 160, 140
 
 
 def add_label(image: np.ndarray, text: str) -> np.ndarray:
     """在图片左上角写白字黑底标签，方便拼图对比。"""
     out = image.copy()
+    # 这里使用cv2.rectangle()函数在图像上绘制一个矩形，作为标签的背景
+    # 矩形的左上角坐标为(0, 0)，右下角坐标为(len(text) * 14 + 20, 36)，颜色为黑色(0, 0, 0)，填充整个矩形(-1表示填充)
     cv2.rectangle(out, (0, 0), (len(text) * 14 + 20, 36), (0, 0, 0), -1)
+    # 这里使用cv2.putText()函数在图像上绘制文本，作为标签的内容
+    # 文本的左下角坐标为(10, 26)，字体为cv2.FONT_HERSHEY_SIMPLEX，字体大小为0.8，颜色为白色(255, 255, 255)，线宽为2，线型为cv2.LINE_AA(抗锯齿)
     cv2.putText(out, text, (10, 26), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
                 (255, 255, 255), 2, cv2.LINE_AA)
     return out
@@ -28,6 +33,7 @@ def add_label(image: np.ndarray, text: str) -> np.ndarray:
 def main() -> None:
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
+    # 读取图像文件，使用cv2.imread()函数读取指定路径的图像文件，返回一个NumPy数组表示图像数据
     img = cv2.imread(str(DATA_PATH))
     if img is None:
         raise SystemExit(f"Cannot read {DATA_PATH}")
@@ -60,7 +66,7 @@ def main() -> None:
     only_r = np.zeros_like(img)
     only_r[:, :, 2] = img[:, :, 2]
 
-    # 6. 灰度图：shape 变成 (h, w)，是三个通道的加权和，不是简单取某一个通道
+    # 6. 灰度图：shape 变成 (h, w)，三个通道的加权和
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     print("gray shape:", gray.shape, "| color shape:", img.shape)
 
